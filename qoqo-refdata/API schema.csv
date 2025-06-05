@@ -1,0 +1,94 @@
+CODE,Ver,Endpoint,Description,Req Header,Req Payload,Resn,Error Codes,Implemente,Status,Auth Memo,Question,Memo
+AUTH-001,1,POST /auth/signup,회원가입 (일반 유저 및 관리자),Content-Type: application/json,"{
+  username: String,
+  phone_num: String,
+  email: String,
+  password: String,
+  role: 'USER' | 'MANAGER',
+  gym_name: String
+}","201 Created
+{
+  user: User
+}","400, 409",○,준비,X,,토큰 없음
+AUTH-002,1,POST /auth/login,로그인 (랜덤 토큰 발급),Content-Type: application/json,"{
+  email: String,
+  password: String
+}","200 OK
+{
+  accessToken: String
+}","401, 404",○,준비,X,,랜덤 문자열 토큰 발급
+RESV-001,1,POST /reservations,줄서기 등록,Authorization: Bearer <accessToken>,"{
+  equipment_id: Int,
+  desired_time: Int
+}","201 Created
+{
+  reservation: Reservation
+}","400, 403, 404",○,준비,사용자 토큰,,
+RESV-002,1,PATCH /reservations/:id,지각 여부 및 행동 선택,Authorization: Bearer <accessToken>,"{
+  late_action: 'WAIT' | 'CANCEL'
+}","200 OK
+{
+  reservation: Reservation
+}","400, 403, 404",○,준비,사용자 토큰,,
+USAGE-001,1,POST /usages/start,운동 시작 (기구 타이머 시작),Authorization: Bearer <accessToken>,"{
+  user_id: Int,
+  equipment_id: Int,
+  reservation_id?: Int
+}","201 Created
+{
+  usage: Usage
+}","400, 403, 404",○,준비,매니저 토큰,,
+USAGE-002,1,PATCH /usages/:id/stop,운동 종료 (타이머 종료),Authorization: Bearer <accessToken>,"{
+  end_time?: datetime
+}","200 OK
+{
+  usage: Usage
+}","400, 403, 404",○,준비,매니저 토큰,,
+USER-001,1,GET /users/search,전화번호로 유저 검색,Authorization: Bearer <manager_token>,"Request Query:
+{
+  phone: String
+}","200 OK
+[
+  {
+    id: Int,
+    username: String,
+    phone_num: String
+  }
+]","400, 404",○,준비,매니저 토큰,,기구 검색창에서 유저 매칭용
+EQUIP-004,1,GET /equipments/:id/state,기구의 현재 상태 조회 (사용자 및 대기열),Authorization: Bearer <manager_token>,-,"200 OK
+{
+  current_usage: {
+    user: {
+      id: Int,
+      username: String
+    },
+    remaining_time: Int
+  },
+  reservation_queue: [
+    {
+      id: Int,
+      username: String,
+      reserved_time: datetime
+    }
+  ]
+}","401, 403, 404",○,준비,매니저 토큰,,기구 대기화면 실시간 상태 표시용
+EQUIP-001,1,GET /equipments,헬스장의 전체 기구 목록 조회,Authorization: Bearer <manager_token>,-,"200 OK
+[
+  {
+    id: Int,
+    equip_name: String,
+    is_active: Boolean
+  }
+]","401, 403",○,준비,매니저 토큰,,홈화면에서 기구 나열용
+EQUIP-002,1,GET /equipments/:id,특정 기구 상세 조회,Authorization: Bearer <manager_token>,-,"200 OK
+{
+  id: Int,
+  equip_name: String,
+  is_active: Boolean
+}","401, 403, 404",○,준비,매니저 토큰,,
+GYM-001,1,GET /auth/me,현재 로그인된 매니저의 헬스장 ID 조회,Authorization: Bearer <manager_token>,-,"200 OK
+{
+  manager_id: Int,
+  username: String,
+  gym_name: String
+}","401, 403",○,준비,매니저 토큰,,홈화면 우상단 헬스장 이름 표시용

@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int          @id @default(autoincrement())
+  username   String
+  phone_num  String       @unique
+  email      String       @unique
+  password   String
+  role       String
+  gym_name   String
+  user_image String       @default("/images/users/default.jpg")
+  created_at DateTime     @default(now())
+  reservations Reservation[]
+  usages      Usage[]
+}
+
+model Equipment {
+  id         Int          @id @default(autoincrement())
+  equip_name String
+  equip_type String      // 운동기구 종류 (가슴, 등, 하체 등)
+  equip_image String     // 운동기구 이미지 URL
+  is_active  Boolean
+  reservations Reservation[]
+  usages      Usage[]
+}
+
+model Reservation {
+  id              Int           @id @default(autoincrement())
+  equipment_id    Int
+  user_id         Int
+  desired_time    Int
+  reserved_time   DateTime      @default(now())
+  estimated_start DateTime?
+  late_deadline   DateTime?
+  is_late         Boolean       @default(false)
+  late_action     LateAction?
+  is_active       Boolean       @default(true)
+  status          ReservationStatus
+
+  user        User        @relation(fields: [user_id], references: [id])
+  equipment   Equipment   @relation(fields: [equipment_id], references: [id])
+  usage       Usage?      
+}
+
+model Usage {
+  id             Int           @id @default(autoincrement())
+  equipment_id   Int
+  user_id        Int
+  reservation_id Int?          @unique  
+  start_time     DateTime
+  end_time       DateTime?
+  is_active      Boolean       @default(true)
+
+  user        User        @relation(fields: [user_id], references: [id])
+  equipment   Equipment   @relation(fields: [equipment_id], references: [id])
+  reservation Reservation? @relation(fields: [reservation_id], references: [id])
+}
+
+
+enum LateAction {
+  WAIT
+  CANCEL
+}
+
+enum ReservationStatus {
+  WAITING
+  IN_PROGRESS
+  DONE
+  CANCELED
+  SKIPPED
+}
