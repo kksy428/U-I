@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -232,12 +233,15 @@ const EquipmentDetailScreen: React.FC = () => {
   };
 
   // 대기 등록
-  const handleWaitingSubmit = (selectedTime: number, skipIfAbsent: boolean) => {
+  const [skipOption, setSkipOption] = useState('next'); // 'next' 또는 'delete'
+
+  // handleWaitingSubmit 함수 수정
+  const handleWaitingSubmit = (selectedTime: number, skipOption: string) => {
     if (!selectedMember) {
       Alert.alert('알림', '회원을 선택해주세요.');
       return;
     }
-
+  
     const isAlreadyWaiting = waitingUsers.some(user => user.id === selectedMember.id);
     const isCurrentUser = currentUser && currentUser.id === selectedMember.id;
     
@@ -245,7 +249,7 @@ const EquipmentDetailScreen: React.FC = () => {
       Alert.alert('알림', '이미 대기 중이거나 사용 중인 회원입니다.');
       return;
     }
-
+  
     const newUser: WaitingUser = {
       id: selectedMember.id,
       name: selectedMember.name,
@@ -253,9 +257,9 @@ const EquipmentDetailScreen: React.FC = () => {
       waitingTime: '대기중',
       gymName: selectedMember.gymName,
       selectedTime: selectedTime,
-      skipIfAbsent: skipIfAbsent,
+      skipIfAbsent: skipOption === 'next', // 'next'면 true, 'delete'면 false
     };
-
+  
     // 현재 사용자도 없고, 대기자도 없고, 다음 사용자도 없는 경우 - 바로 시작
     if (!currentUser && waitingUsers.length === 0 && !nextUser) {
       setCurrentUser({
@@ -269,11 +273,11 @@ const EquipmentDetailScreen: React.FC = () => {
       setWaitingUsers(prev => [...prev, newUser]);
       Alert.alert('완료', `${newUser.name}님이 대기열에 등록되었습니다.`);
     }
-
+  
     setShowTimeModal(false);
     setPhoneSearchQuery('');
     setSelectedMember(null);
-    setSkipIfAbsent(false);
+    setSkipOption('next'); // 기본값으로 초기화
     setSelectedTime(10);
   };
 
@@ -389,63 +393,86 @@ const EquipmentDetailScreen: React.FC = () => {
 
       {/* 시간 설정 모달 */}
       <Modal
-        visible={showTimeModal}
-        animationType="slide"
-        transparent={true}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>시간 설정</Text>
-            <View style={styles.timeSelectRow}>
-              {[1, 15, 20, 25, 30].map(min => (
-                <TouchableOpacity
-                  key={min}
-                  style={[
-                    styles.timeOption,
-                    selectedTime === min && styles.timeOptionSelected
-                  ]}
-                  onPress={() => setSelectedTime(min)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.timeOptionText,
-                      selectedTime === min && styles.timeOptionTextSelected
-                    ]}
-                  >
-                    {min}분
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.skipOptionContainer}>
-              <Text style={styles.skipOptionTitle}>다음 사람이 안 왔을 때</Text>
-              <View style={styles.skipOptionButtons}>
-                <TouchableOpacity
-                  style={[styles.skipOptionButton, skipIfAbsent && styles.skipOptionButtonActive]}
-                  onPress={() => setSkipIfAbsent(true)}
-                >
-                  <Text style={styles.skipOptionButtonText}>다음 사람으로</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={() => handleWaitingSubmit(selectedTime, skipIfAbsent)}
-              >
-                <Text style={styles.submitButtonText}>줄 설래요!</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowTimeModal(false)}
-              >
-                <Text style={styles.closeButtonText}>나가기</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+  visible={showTimeModal}
+  animationType="slide"
+  transparent={true}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>시간 설정</Text>
+      <View style={styles.timeSelectRow}>
+        {[10, 15, 20, 25, 30].map(min => (
+          <TouchableOpacity
+            key={min}
+            style={[
+              styles.timeOption,
+              selectedTime === min && styles.timeOptionSelected
+            ]}
+            onPress={() => setSelectedTime(min)}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={[
+                styles.timeOptionText,
+                selectedTime === min && styles.timeOptionTextSelected
+              ]}
+            >
+              {min}min
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      
+      <View style={styles.skipOptionContainer}>
+        <Text style={styles.skipOptionTitle}>순번 설정</Text>
+        <TouchableOpacity
+          style={[
+            styles.skipOptionItem,
+            skipOption === 'next' && styles.skipOptionItemSelected
+          ]}
+          onPress={() => setSkipOption('next')}
+        >
+          <Text style={[
+            styles.skipOptionText,
+            skipOption === 'next' && styles.skipOptionTextSelected
+          ]}>
+            지각하면 다음 순서로 넘겨주세요
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.skipOptionItem,
+            skipOption === 'delete' && styles.skipOptionItemSelected
+          ]}
+          onPress={() => setSkipOption('delete')}
+        >
+          <Text style={[
+            styles.skipOptionText,
+            skipOption === 'delete' && styles.skipOptionTextSelected
+          ]}>
+            지각하면 삭제 해주세요
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.modalButtons}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => setShowTimeModal(false)}
+        >
+          <Text style={styles.closeButtonText}>나가기</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={() => handleWaitingSubmit(selectedTime, skipOption)}
+        >
+          <Text style={styles.submitButtonText}>줄 설래요!</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
 
       {/* start 버튼 모달 (2분 대기) */}
       <Modal
@@ -476,8 +503,10 @@ const EquipmentDetailScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const isTablet = screenWidth >= 600;
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -514,7 +543,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   rightPanel: {
-    width: 280, // 고정값
+    width: isTablet ? 280 : 220, 
     backgroundColor: '#f8f8f8',
     padding: 16,
   },
@@ -534,20 +563,18 @@ const styles = StyleSheet.create({
   },
   timerContainer: {
     alignItems: 'center',
-    width: 889,
+    width: '100%',
+    maxWidth: 889,
   },
   timerText: {
     color: '#28D8AF',
     textAlign: 'center',
-    marginTop: 50,
-    marginBottom: 120,
-    marginLeft: 120,
-    fontSize: 200,
+    marginVertical: 50,
+    fontSize: isTablet ? 200 : 100, 
     fontFamily: 'Pixelify Sans',
     fontWeight: '400',
     letterSpacing: 10,
   },
-
   waitingQueue: {
     padding: 30,
   },
@@ -748,6 +775,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  skipOptionItem: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  skipOptionItemSelected: {
+    backgroundColor: '#e8f5e8',
+    borderColor: '#28D8AF',
+  },
+  skipOptionText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  skipOptionTextSelected: {
+    color: '#28D8AF',
+    fontWeight: '500',
+  },
 });
-
 export default EquipmentDetailScreen;
