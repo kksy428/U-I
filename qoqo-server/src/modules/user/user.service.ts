@@ -98,4 +98,25 @@ export class UserService {
       }
     });
   }
+
+  /**
+   * 모든 사용자 데이터 삭제 (테스트용)
+   */
+  async deleteAllUsers() {
+    return await this.prisma.$transaction(async (tx) => {
+      // 먼저 Usage 삭제
+      await tx.usage.deleteMany();
+      
+      // 그 다음 Reservation 삭제
+      await tx.reservation.deleteMany();
+      
+      // 마지막으로 User 삭제
+      const deletedUsers = await tx.user.deleteMany();
+      
+      return {
+        message: '모든 사용자 데이터가 삭제되었습니다.',
+        count: deletedUsers.count
+      };
+    });
+  }
 }

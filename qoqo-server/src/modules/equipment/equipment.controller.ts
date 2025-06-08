@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 
 @Controller('equipment')
@@ -21,5 +21,32 @@ export class EquipmentController {
   @Get('type/:type')
   async getEquipmentByType(@Param('type') type: string) {
     return await this.equipmentService.getEquipmentByType(type);
+  }
+
+  // 특정 헬스장의 회원 목록 가져오기
+  @Get('gym/:gymName/users')
+  async getGymUsers(
+    @Param('gymName') gymName: string,
+    @Query('phoneNumber') phoneNumber?: string,
+  ) {
+    return await this.equipmentService.getGymUsers(gymName, phoneNumber);
+  }
+
+  // 특정 운동기구의 대기열 정보 가져오기
+  @Get(':id/queue')
+  async getEquipmentQueue(@Param('id', ParseIntPipe) id: number) {
+    return await this.equipmentService.getEquipmentQueue(id);
+  }
+
+  // 현재 운동기구 사용 정보와 남은 시간 가져오기
+  @Get(':id/current')
+  async getCurrentUsage(@Param('id', ParseIntPipe) id: number) {
+    return await this.equipmentService.getCurrentUsage(id);
+  }
+
+  // 특정 헬스장의 운동기구 정보 가져오기
+  @Get('gym/:gymName/equipment')
+  async getGymEquipment(@Param('gymName') gymName: string) {
+    return await this.equipmentService.getGymEquipment(gymName);
   }
 } 

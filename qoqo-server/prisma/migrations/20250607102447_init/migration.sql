@@ -7,6 +7,7 @@ CREATE TABLE `User` (
     `password` VARCHAR(191) NOT NULL,
     `role` VARCHAR(191) NOT NULL,
     `gym_name` VARCHAR(191) NOT NULL,
+    `user_image` VARCHAR(191) NOT NULL DEFAULT '/images/users/default.jpg',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `User_phone_num_key`(`phone_num`),
@@ -20,7 +21,8 @@ CREATE TABLE `Equipment` (
     `equip_name` VARCHAR(191) NOT NULL,
     `equip_type` VARCHAR(191) NOT NULL,
     `equip_image` VARCHAR(191) NOT NULL,
-    `is_active` BOOLEAN NOT NULL,
+    `gym_name` VARCHAR(191) NOT NULL,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -33,11 +35,9 @@ CREATE TABLE `Reservation` (
     `desired_time` INTEGER NOT NULL,
     `reserved_time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `estimated_start` DATETIME(3) NULL,
-    `late_deadline` DATETIME(3) NULL,
-    `is_late` BOOLEAN NOT NULL DEFAULT false,
-    `late_action` ENUM('WAIT', 'CANCEL') NULL,
+    `late_policy` VARCHAR(191) NOT NULL,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
-    `status` ENUM('WAITING', 'IN_PROGRESS', 'DONE', 'CANCELED', 'SKIPPED') NOT NULL,
+    `status` ENUM('WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'SKIPPED') NOT NULL DEFAULT 'WAITING',
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -53,6 +53,7 @@ CREATE TABLE `Usage` (
     `is_active` BOOLEAN NOT NULL DEFAULT true,
 
     UNIQUE INDEX `Usage_reservation_id_key`(`reservation_id`),
+    INDEX `Usage_user_id_start_time_idx`(`user_id`, `start_time`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

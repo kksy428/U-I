@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="918ca76c-e34b-409c-bbc1-0b3e63355879" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/QoqoApp/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/.vscode/settings.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/(tabs)/_layout.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/(tabs)/index.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/+not-found.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/EquipmentDetailScreen.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/Type.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/_layout.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/ch.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/de.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/leg.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/sit.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/login-loading.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/login.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/main.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/signup-complete.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/app/signup.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/fonts/PixelifySans-VariableFont_wght.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/fonts/PretendardVariable.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/fonts/Righteous-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/images/logo.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/Collapsible.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ExternalLink.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/HapticTab.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/HelloWave.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ParallaxScrollView.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ThemedText.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ThemedView.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/IconSymbol.ios.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/IconSymbol.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/TabBarBackground.ios.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/TabBarBackground.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/constants/Colors.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/eslint.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/hooks/useColorScheme.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/hooks/useColorScheme.web.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/hooks/useThemeColor.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/scripts/reset-project.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/QoqoApp/tsconfig.json" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2y39skgFrALR8Su0eIzzRvYlUXp" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/cksgu&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
+    ]
+  }
+}</component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="디폴트 작업">
+      <changelist id="918ca76c-e34b-409c-bbc1-0b3e63355879" name="변경" comment="" />
+      <created>1749052599312</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1749052599312</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

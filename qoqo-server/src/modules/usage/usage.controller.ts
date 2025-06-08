@@ -1,34 +1,47 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { UsageService } from './usage.service';
 
 @Controller('usage')
 export class UsageController {
   constructor(private readonly usageService: UsageService) {}
 
-  // 특정 헬스장의 회원 목록 가져오기 (전화번호 뒷자리로 필터링)
-  @Get('gym/:gymName/users')
-  async getGymUsers(
-    @Param('gymName') gymName: string,
-    @Query('phoneNumber') phoneNumber?: string,
+  /**
+   * 운동 기록 저장
+   * @param userId 사용자 ID
+   * @param equipmentId 운동기구 ID
+   * @param startTime 운동 시작 시간
+   * @param endTime 운동 종료 시간
+   */
+  @Post('record')
+  async saveUsageRecord(
+    @Body('userId', ParseIntPipe) userId: number,
+    @Body('equipmentId', ParseIntPipe) equipmentId: number,
+    @Body('startTime') startTime: string,
+    @Body('endTime') endTime: string,
   ) {
-    return await this.usageService.getGymUsers(gymName, phoneNumber);
+    return await this.usageService.saveUsageRecord(
+      userId,
+      equipmentId,
+      new Date(startTime),
+      new Date(endTime),
+    );
   }
 
-  // 특정 운동기구의 대기열 정보 가져오기 (최대 4명)
-  @Get('equipment/:id/queue')
-  async getEquipmentQueue(@Param('id', ParseIntPipe) id: number) {
-    return await this.usageService.getEquipmentQueue(id);
+  /**
+   * 사용자의 운동 기록 조회
+   * @param userId 사용자 ID
+   */
+  @Get('history/:userId')
+  async getUserUsageHistory(@Param('userId', ParseIntPipe) userId: number) {
+    return await this.usageService.getUserUsageHistory(userId);
   }
 
-  // 현재 운동기구 사용 정보와 남은 시간 가져오기
-  @Get('equipment/:id/current')
-  async getCurrentUsage(@Param('id', ParseIntPipe) id: number) {
-    return await this.usageService.getCurrentUsage(id);
-  }
-
-  // 특정 헬스장의 운동기구 정보 가져오기
-  @Get('gym/:gymName/equipment')
-  async getGymEquipment(@Param('gymName') gymName: string) {
-    return await this.usageService.getGymEquipment(gymName);
+  /**
+   * 사용자의 운동 통계 조회
+   * @param userId 사용자 ID
+   */
+  @Get('stats/:userId')
+  async getUserUsageStats(@Param('userId', ParseIntPipe) userId: number) {
+    return await this.usageService.getUserUsageStats(userId);
   }
 } 

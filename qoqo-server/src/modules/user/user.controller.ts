@@ -1,8 +1,8 @@
-import { Body, Controller, Post, BadRequestException, Param, Get } from '@nestjs/common';
+import { Body, Controller, Post, BadRequestException, Param, Get, Delete } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserStep1Dto, CreateUserStep2Dto, LoginDto } from './user.dto';
 
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -60,5 +60,11 @@ export class UserController {
       throw new BadRequestException('User not found');
     }
     return { gym_name: user.gym_name };
+  }
+
+  // 모든 사용자 데이터 삭제 (테스트용)
+  @Delete('delete-all')
+  async deleteAllUsers() {
+    return await this.userService.deleteAllUsers();
   }
 }
