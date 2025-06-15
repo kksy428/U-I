@@ -1,0 +1,23 @@
+Method,Endpoint,Description
+POST,/user/signup/step1,회원가입 1단계
+POST,/user/signup/step2/:email,회원가입 2단계
+POST,/user/login,로그인
+POST,/user/logout,로그아웃
+GET,/user/:email,사용자 정보 가져오기
+DELETE,/user/delete-all,모든 사용자 데이터 삭제(테스트용)
+GET,/equipment,모든 운동기구 가져오기
+GET,/equipment/:id,ID로 특정 운동기구 가져오기
+GET,/equipment/type/:type,종류별 운동기구 가져오기
+GET,/equipment/gym/:gymName/users,특정 헬스장 회원 목록 가져오기
+GET,/equipment/:id/current,현재 운동기구 사용 정보와 남은 시간
+GET,/equipment/gym/:gymName/equipment,특정 헬스장 운동기구 정보
+POST,/reservations,새로운 예약 생성
+PUT,/reservations/equipment/:equipmentId/status-event,운동 상태 변경 이벤트 처리
+GET,/reservations/user/:userId,사용자의 현재 예약 목록 조회
+GET,/reservations/equipment/:equipmentId/status,현재 운동 상태 조회
+GET,/reservations/equipment/:equipmentId/queue,운동기구의 대기열 조회
+DELETE,/reservations/all,모든 예약 삭제(개발용)
+POST,/usage/record,운동 기록 저장
+GET,/usage/history/:userId,사용자의 운동 기록 조회
+GET,/usage/stats/:userId,사용자의 운동 통계 조회
+GET,/,헬스 서버 기본 테스트 (Hello World)
