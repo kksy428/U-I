@@ -2,7 +2,7 @@
 export interface ExerciseEquipment {
     id: number;
     name: string;
-    image: any;
+    image_url: any;
     price?: string;
     tag?: string;
     categories: string[];

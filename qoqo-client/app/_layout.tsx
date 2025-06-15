@@ -10,7 +10,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Righteous: require('../assets/fonts/Righteous-Regular.ttf'),
     PixelifySans: require('../assets/fonts/PixelifySans-VariableFont_wght.ttf'),
-    Pretendard: require('../assets/fonts/PretendardVariable.ttf'), 
+    Pretendard: require('../assets/fonts/PretendardVariable.ttf'),
+    Inter: require('../assets/fonts/Inter-VariableFont_slnt,wght.ttf'), 
   });
 
   useEffect(() => {
@@ -58,6 +59,18 @@ export default function RootLayout() {
         options={{ 
           headerShown: false,
           title: '로딩중' 
+        }} 
+      />
+      <Stack.Screen 
+        name="main" 
+        options={{ 
+          headerShown: false
+        }} 
+      />
+      <Stack.Screen 
+        name="EquipmentDetailScreen" 
+        options={{ 
+          headerShown: false
         }} 
       />
     </Stack>

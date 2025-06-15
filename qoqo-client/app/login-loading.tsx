@@ -62,12 +62,14 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
+    fontFamily: 'Righteous',
     color: '#000',
     marginTop: 15,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: 'Pretendard',
     color: '#000',
     fontWeight: '600',
     marginTop: 10,

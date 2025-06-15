@@ -25,18 +25,10 @@ export class EquipmentController {
 
   // 특정 헬스장의 회원 목록 가져오기
   @Get('gym/:gymName/users')
-  async getGymUsers(
-    @Param('gymName') gymName: string,
-    @Query('phoneNumber') phoneNumber?: string,
-  ) {
-    return await this.equipmentService.getGymUsers(gymName, phoneNumber);
+  async getGymUsers(@Param('gymName') gymName: string) {
+    return await this.equipmentService.getGymUsers(gymName);
   }
 
-  // 특정 운동기구의 대기열 정보 가져오기
-  @Get(':id/queue')
-  async getEquipmentQueue(@Param('id', ParseIntPipe) id: number) {
-    return await this.equipmentService.getEquipmentQueue(id);
-  }
 
   // 현재 운동기구 사용 정보와 남은 시간 가져오기
   @Get(':id/current')

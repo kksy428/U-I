@@ -65,18 +65,21 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
+    fontFamily: 'Righteous',
     color: '#000',
     marginTop: 15,
     marginBottom: 10,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
+    fontFamily: 'Pretendard',
     color: '#000',
     marginTop: 30,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: 'Pretendard',
     color: '#000',
     marginTop: 10,
     marginBottom: 40,
@@ -93,5 +96,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Pretendard',
   },
 });

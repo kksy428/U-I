@@ -12,8 +12,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import { Circle, Rect, Svg } from 'react-native-svg';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../config';
 
 // useInterval 커스텀 훅
 function useInterval(callback: () => void, delay: number | null) {
@@ -68,19 +72,23 @@ const QoqoLogo = ({ size = 24 }: { size?: number }) => (
 
 interface WaitingUser {
   id: number;
-  name: string;
+  username: string;
+  phoneNum: string;
   phoneLastFour: string;
   waitingTime: string;
   gymName: string;
   selectedTime: number;
-  skipIfAbsent: boolean;
+  latePolicy: string;
+  status: string;
+  userImage?: string;
 }
 
 interface GymMember {
   id: number;
-  name: string;
-  phoneLastFour: string;
+  username: string;
+  phoneNum: string;
   gymName: string;
+  userImage?: string;
 }
 
 interface TimerState {
@@ -93,22 +101,13 @@ interface TimerState {
 const EquipmentDetailScreen: React.FC = () => {
   const params = useLocalSearchParams<{ equipment?: string }>();
   const equipment = params.equipment ? JSON.parse(params.equipment) : null;
-  const currentUserGym = "코코짐";
+  const [currentUserGym, setCurrentUserGym] = useState<string>("");
+  const [gymMembers, setGymMembers] = useState<GymMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [timer, setTimer] = useState<TimerState>({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
   const [waitingUsers, setWaitingUsers] = useState<WaitingUser[]>([]);
-  const [gymMembers] = useState<GymMember[]>([
-    { id: 1, name: '심상한김', phoneLastFour: '5795', gymName: '코코짐' },
-    { id: 2, name: '김코코', phoneLastFour: '9485', gymName: '코코짐' },
-    { id: 3, name: 'Bibian', phoneLastFour: '9604', gymName: '코코짐' },
-    { id: 4, name: 'Daniel', phoneLastFour: '1234', gymName: '코코짐' },
-    { id: 5, name: '운동하지', phoneLastFour: '3457', gymName: '코코짐' },
-    { id: 6, name: '김정룡', phoneLastFour: '0963', gymName: '코코짐' },
-    { id: 7, name: '박정원', phoneLastFour: '3893', gymName: '코코짐' },
-    { id: 8, name: '유리셀', phoneLastFour: '1502', gymName: '코코짐' },
-    { id: 9, name: '로디드리', phoneLastFour: '3947', gymName: '코코짐' },
-    { id: 10, name: '이민호', phoneLastFour: '2548', gymName: '파워짐' },
-  ]);
   const [showTimeModal, setShowTimeModal] = useState(false);
   const [selectedTime, setSelectedTime] = useState(10);
   const [selectedEquipment, setSelectedEquipment] = useState('');
@@ -120,57 +119,207 @@ const EquipmentDetailScreen: React.FC = () => {
   const [showStartModal, setShowStartModal] = useState(false);
   const [nextUser, setNextUser] = useState<WaitingUser | null>(null);
   const [startDelayTimer, setStartDelayTimer] = useState<TimerState>({ minutes: 0, seconds: 120, milliseconds: 0, isRunning: false });
+  const [errorMessage, setErrorMessage] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // 현재 로그인한 사용자의 체육관 정보와 회원 목록을 가져옵니다
+  useEffect(() => {
+    const fetchGymData = async () => {
+      try {
+        setIsLoading(true);
+        // 로그인한 사용자의 email을 AsyncStorage에서 불러옴
+        const savedEmail = await AsyncStorage.getItem('userEmail');
+        if (!savedEmail) throw new Error('로그인 정보가 없습니다.');
+        // email로 사용자 정보 조회
+        const userResponse = await axios.get(`${API_BASE_URL}/user/${savedEmail}`);
+        const userData = userResponse.data as any;
+        setCurrentUserGym(userData.gym_name);
+        // 해당 체육관의 회원 목록을 가져옵니다
+        const membersResponse = await axios.get(`${API_BASE_URL}/equipment/gym/${userData.gym_name}/users`);
+        const members = membersResponse.data.map((member: any) => ({
+          id: member.id,
+          username: member.username,
+          phoneNum: member.phone_num,
+          gymName: member.gym_name,
+          userImage: member.user_image,
+        }));
+        setGymMembers(members);
+      } catch (err) {
+        setError('데이터를 불러오는데 실패했습니다.');
+        console.error('Error fetching gym data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchGymData();
+  }, []);
+
+  // 운동 상태 업데이트 함수
+  const fetchExerciseStatus = async (eventType?: 'START_EXERCISE' | 'END_EXERCISE' | 'ARRIVE' | 'LATE') => {
+    if (!equipment) return;
+    try {
+      // 1. 먼저 운동 상태 업데이트 (eventType이 있는 경우에만)
+      if (eventType) {
+        const statusEventResponse = await axios.put(
+          `${API_BASE_URL}/reservations/equipment/${equipment.id}/status-event`,
+          { eventType }
+        );
+        const statusEventData = statusEventResponse.data as any;
+      }
+      
+      // 2. 업데이트된 대기열 정보 가져오기
+      const queueResponse = await axios.get(`${API_BASE_URL}/reservations/equipment/${equipment.id}/queue`);
+      const queueData = queueResponse.data as any;
+      
+      // 현재 사용자와 대기자 목록 업데이트
+      if (queueData.currentUser) {
+        setCurrentUser({
+          id: queueData.currentUser.id,
+          username: queueData.currentUser.username,
+          phoneNum: queueData.currentUser.phone_num,
+          phoneLastFour: queueData.currentUser.phone_num.slice(-4),
+          waitingTime: '0',
+          gymName: queueData.currentUser.gym_name,
+          selectedTime: queueData.currentUser.selectedTime,
+          latePolicy: queueData.currentUser.latePolicy,
+          status: queueData.currentUser.status,
+          userImage: queueData.currentUser.user_image
+        });
+      } else {
+        setCurrentUser(null);
+      }
+      // 대기자 목록 업데이트
+      const waitingUsers = queueData.waitingUsers.map((user: any) => ({
+        id: user.id,
+        username: user.username,
+        phoneNum: user.phone_num,
+        phoneLastFour: user.phone_num.slice(-4),
+        waitingTime: '0',
+        gymName: user.gym_name,
+        selectedTime: user.selectedTime,
+        latePolicy: user.latePolicy,
+        status: user.status,
+        userImage: user.user_image
+      }));
+      setWaitingUsers(waitingUsers);
+      return queueData;
+    } catch (error) {
+      console.error('Error fetching exercise status:', error);
+      Alert.alert('오류', '운동 상태를 불러오는데 실패했습니다.');
+      return null;
+    }
+  };
+
+  // 운동 상태 주기적 업데이트
+  useEffect(() => {
+    // 초기 로드 시 상태 가져오기 (eventType 없이)
+    fetchExerciseStatus();
+
+    // 5초마다 운동 상태 업데이트 (eventType 없이)
+    const intervalId = setInterval(() => fetchExerciseStatus(), 5000);
+    return () => clearInterval(intervalId);
+  }, [equipment]);
 
   // 타이머 완료 시 처리
-  const handleTimerComplete = () => {
-    console.log('타이머 완료! 다음 대기자로 넘어갑니다.');
-    if (waitingUsers.length > 0) {
-      const next = waitingUsers[0];
-      setNextUser(next);
-      setShowStartModal(true);
-      setStartDelayTimer({ minutes: 2, seconds: 0, milliseconds: 0, isRunning: true });
-    } else {
-      setCurrentUser(null);
-      setTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
-      Alert.alert('대기열 완료', '현재 대기 중인 회원이 없습니다.');
+  const handleTimerComplete = async () => {
+    if (!equipment) return;
+    try {
+      // fetchExerciseStatus를 사용하여 운동 종료 처리 및 상태 업데이트
+      const queueData = await fetchExerciseStatus('END_EXERCISE');
+      // 최신 대기열 데이터로 2분 타이머 시작 조건 평가
+      if (queueData && queueData.waitingUsers && queueData.waitingUsers.length > 0) {
+        const next = queueData.waitingUsers[0];
+        setNextUser({
+          id: next.id,
+          username: next.username,
+          phoneNum: next.phoneNum,
+          phoneLastFour: next.phoneNum ? next.phoneNum.slice(-4) : '',
+          waitingTime: '0',
+          gymName: next.gymName,
+          selectedTime: next.selectedTime,
+          latePolicy: next.latePolicy,
+          status: next.status,
+          userImage: next.userImage
+        });
+        setShowStartModal(true);
+        setStartDelayTimer({ minutes: 2, seconds: 0, milliseconds: 0, isRunning: true });
+      } else {
+        // 대기 중인 사용자가 없거나 상태가 다른 경우
+        setCurrentUser(null);
+        setNextUser(null);
+        Alert.alert('알림', '줄을 서주세요.');
+      }
+    } catch (error) {
+      console.error('Error ending exercise:', error);
+      Alert.alert('오류', '운동 종료에 실패했습니다.');
     }
   };
 
   // 2분 대기 타이머 완료 시 처리
-  const handleStartDelayComplete = () => {
-    console.log('2분 대기 완료! 다음 대기자로 넘어갑니다.');
-    setShowStartModal(false);
-    
-    if (waitingUsers.length > 0) {
-      const next = waitingUsers[0];
-      if (next.skipIfAbsent) {
-        // 건너뛰기 설정된 경우
-        setWaitingUsers(prev => prev.slice(1));
-        // 다음 대기자가 있는지 확인
-        if (waitingUsers.length > 1) {
-          const nextNext = waitingUsers[1];
-          setNextUser(nextNext);
-          setShowStartModal(true);
-          setStartDelayTimer({ minutes: 2, seconds: 0, milliseconds: 0, isRunning: true });
-        } else {
-          // 더 이상 대기자가 없음
-          setCurrentUser(null);
-          setNextUser(null);
-          setTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
-          Alert.alert('대기열 완료', '현재 대기 중인 회원이 없습니다.');
-        }
-      } else {
-        // 건너뛰기 설정 안된 경우 - 바로 시작
-        setCurrentUser(next);
-        setWaitingUsers(prev => prev.slice(1));
+  const handleStartDelayComplete = async () => {
+    if (!equipment) return;
+    try {
+      // LATE 이벤트 발생 및 상태 업데이트
+      const queueData = await fetchExerciseStatus('LATE');
+
+      // 대기열이 없으면 팝업만 닫고 함수 종료
+      if (!queueData || !queueData.waitingUsers || queueData.waitingUsers.length === 0) {
+        setShowStartModal(false);
+        setStartDelayTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
+        setCurrentUser(null);
         setNextUser(null);
-        setTimer({ minutes: next.selectedTime, seconds: 0, milliseconds: 0, isRunning: true });
+        return;
       }
-    } else {
-      setCurrentUser(null);
-      setNextUser(null);
-      setTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
-      Alert.alert('대기열 완료', '현재 대기 중인 회원이 없습니다.');
+
+      // 다음 대기자 처리
+      const next = queueData.waitingUsers[0];
+      setNextUser({
+        id: next.id,
+        username: next.username,
+        phoneNum: next.phoneNum,
+        phoneLastFour: next.phoneNum ? next.phoneNum.slice(-4) : '',
+        waitingTime: '0',
+        gymName: next.gymName,
+        selectedTime: next.selectedTime,
+        latePolicy: next.latePolicy,
+        status: next.status,
+        userImage: next.userImage
+      });
+      setShowStartModal(true);
+      setStartDelayTimer({ minutes: 2, seconds: 0, milliseconds: 0, isRunning: true });
+    } catch (error) {
+      console.error('Error handling late status:', error);
+      Alert.alert('오류', '지각 확인 처리에 실패했습니다.');
+    }
+  };
+
+  // 도착 후 start 버튼 클릭 시 처리
+  const handleStartPress = async () => {
+    if (!equipment) return;
+    try {
+      // 도착 이벤트 발생 및 상태 업데이트
+      const queueData = await fetchExerciseStatus('ARRIVE');
+      
+      // 대기열이 비어있거나 currentUser가 없으면 팝업만 닫고 함수 종료
+      if (!queueData || !queueData.currentUser) {
+        setShowStartModal(false);
+        setStartDelayTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
+        return;
+      }
+
+      setShowStartModal(false);
+      setStartDelayTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
+
+      // 최신 currentUser로 타이머 시작
+      setTimer({ 
+        minutes: queueData.currentUser.selectedTime, 
+        seconds: 0, 
+        milliseconds: 0, 
+        isRunning: true 
+      });
+    } catch (error) {
+      console.error('Error starting exercise:', error);
+      Alert.alert('오류', '운동 시작에 실패했습니다.');
     }
   };
 
@@ -210,21 +359,20 @@ const EquipmentDetailScreen: React.FC = () => {
 
   // 현재 사용자 및 기구 이름 설정
   useEffect(() => {
-    setSelectedEquipment(equipment?.name || '');
-  }, [equipment?.name]);
+    setSelectedEquipment(equipment?.equip_name || '');
+  }, [equipment?.equip_name]);
 
   // 전화번호 검색
   useEffect(() => {
-    if (phoneSearchQuery.length > 0) {
-      const filtered = gymMembers.filter(member =>
-        member.phoneLastFour.includes(phoneSearchQuery) &&
-        member.gymName === currentUserGym
+    if (phoneSearchQuery) {
+      const filteredMembers = gymMembers.filter(member =>
+        member.phoneNum.slice(-4).startsWith(phoneSearchQuery)
       );
-      setSearchResults(filtered);
+      setSearchResults(filteredMembers);
     } else {
-      setSearchResults(gymMembers.filter(member => member.gymName === currentUserGym));
+      setSearchResults([]);
     }
-  }, [phoneSearchQuery, gymMembers, currentUserGym]);
+  }, [phoneSearchQuery, gymMembers]);
 
   // 회원 선택 시 시간 설정 모달 열기
   const handleMemberSelect = (member: GymMember) => {
@@ -235,75 +383,45 @@ const EquipmentDetailScreen: React.FC = () => {
   // 대기 등록
   const [skipOption, setSkipOption] = useState('next'); // 'next' 또는 'delete'
 
-  // handleWaitingSubmit 함수 수정
-  const handleWaitingSubmit = (selectedTime: number, skipOption: string) => {
-    if (!selectedMember) {
-      Alert.alert('알림', '회원을 선택해주세요.');
-      return;
-    }
-  
-    const isAlreadyWaiting = waitingUsers.some(user => user.id === selectedMember.id);
-    const isCurrentUser = currentUser && currentUser.id === selectedMember.id;
-    
-    if (isAlreadyWaiting || isCurrentUser) {
-      Alert.alert('알림', '이미 대기 중이거나 사용 중인 회원입니다.');
-      return;
-    }
-  
-    const newUser: WaitingUser = {
-      id: selectedMember.id,
-      name: selectedMember.name,
-      phoneLastFour: selectedMember.phoneLastFour,
-      waitingTime: '대기중',
-      gymName: selectedMember.gymName,
-      selectedTime: selectedTime,
-      skipIfAbsent: skipOption === 'next', // 'next'면 true, 'delete'면 false
-    };
-  
-    // 현재 사용자도 없고, 대기자도 없고, 다음 사용자도 없는 경우 - 바로 시작
-    if (!currentUser && waitingUsers.length === 0 && !nextUser) {
-      setCurrentUser({
-        ...newUser,
-        waitingTime: '사용중'
-      });
-      setTimer({ minutes: selectedTime, seconds: 0, milliseconds: 0, isRunning: true });
-      Alert.alert('완료', `${newUser.name}님이 ${selectedEquipment} 사용을 시작합니다.`);
-    } else {
-      // 대기자 목록에 추가
-      setWaitingUsers(prev => [...prev, newUser]);
-      Alert.alert('완료', `${newUser.name}님이 대기열에 등록되었습니다.`);
-    }
-  
-    setShowTimeModal(false);
-    setPhoneSearchQuery('');
-    setSelectedMember(null);
-    setSkipOption('next'); // 기본값으로 초기화
-    setSelectedTime(10);
-  };
+  // 예약 생성 처리
+  const handleWaitingSubmit = async () => {
+    if (!selectedMember || !equipment) return;
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/reservations`,
+        {
+          userId: selectedMember.id,
+          equipmentId: equipment.id,
+          desiredTime: selectedTime,
+          latePolicy: skipOption === 'delete' ? 'CANCELLED' : 'MOVE_TO_NEXT',
+        }
+      );
+      const reservationData = response.data as any;
+      
+      // 예약 생성 성공 시 모달 닫기
+      setShowTimeModal(false);
+      setSelectedMember(null);
+      setPhoneSearchQuery('');
+      setSearchResults([]);
 
-  const handleStartPress = () => {
-    setShowStartModal(false);
-    setStartDelayTimer({ minutes: 0, seconds: 0, milliseconds: 0, isRunning: false });
+      // 대기열 조회하여 현재 사용자 확인
+      const queueResponse = await axios.get(`${API_BASE_URL}/reservations/equipment/${equipment.id}/queue`);
+      const queueData = queueResponse.data as any;
 
-    if (nextUser) {
-      // 대기자 목록에서 제거하고 현재 사용자로 설정
-      setWaitingUsers(prev => prev.slice(1));
-      setCurrentUser({
-        ...nextUser,
-        waitingTime: '사용중'
-      });
-      setNextUser(null);
-      // 타이머 시작
-      setTimer({ minutes: nextUser.selectedTime, seconds: 0, milliseconds: 0, isRunning: true });
+      // 현재 사용자가 있고, 그 사용자가 방금 예약한 사용자인 경우
+      if (queueData.currentUser && queueData.currentUser.id === selectedMember.id) {
+        // 타이머 시작
+        setTimer({
+          minutes: selectedTime,
+          seconds: 0,
+          milliseconds: 0,
+          isRunning: true
+        });
+      }
+    } catch (error) {
+      console.error('Error creating reservation:', error);
+      Alert.alert('오류', '예약 생성에 실패했습니다.');
     }
-  };
-
-  // 타이머 표시 형식
-  const formatTimer = () => {
-    const minutes = String(timer.minutes).padStart(2, '0');
-    const seconds = String(timer.seconds).padStart(2, '0');
-    const milliseconds = String(timer.milliseconds);
-    return `${minutes}:${seconds}:${milliseconds}`;
   };
 
   return (
@@ -315,7 +433,7 @@ const EquipmentDetailScreen: React.FC = () => {
           <Text style={styles.backButton}>←</Text>
         </TouchableOpacity>
         <View style={styles.logoContainer}>
-          <QoqoLogo size={24} />
+          <QoqoLogo size={26} />
           <Text style={styles.headerTitle}>qoqo</Text>
         </View>
       </View>
@@ -328,10 +446,18 @@ const EquipmentDetailScreen: React.FC = () => {
     {/* 왼쪽: 타이머, 운동기구, 하단 대기자 목록 */}
     <View style={styles.leftPanel}>
       <View style={styles.equipmentInfo}>
-        <Text style={styles.equipmentName}>{equipment?.name || selectedEquipment}</Text>
+        <Text style={styles.equipmentName}>{equipment?.equip_name || selectedEquipment}</Text>
       </View>
       <View style={styles.timerContainer}>
-        <Text style={styles.timerText}>{formatTimer()}</Text>
+        <Text style={styles.timerText}>
+          <Text style={styles.timerTextBlack}>
+            {String(timer.minutes).padStart(2, '0')}:
+            {String(timer.seconds).padStart(2, '0')}:
+          </Text>
+          <Text style={styles.timerTextMint}>
+            {String(timer.milliseconds).padStart(2, '0')}
+          </Text>
+        </Text>
       </View>
       {/* 하단 대기자 목록 (왼쪽 메인 영역 하단) */}
       <View style={styles.bottomPanel}>
@@ -341,22 +467,60 @@ const EquipmentDetailScreen: React.FC = () => {
           contentContainerStyle={styles.waitingQueueContent}
           showsHorizontalScrollIndicator={false}
         >
-          {currentUser && (
+          {currentUser ? (
             <View style={styles.queueItem}>
               <View style={styles.userCircle}>
-                <Text style={styles.userInitial}>{currentUser.name.charAt(0)}</Text>
+                {currentUser.userImage ? (
+                  <Image
+                    source={{ uri: API_BASE_URL + currentUser.userImage }}
+                    style={styles.userImage}
+                  />
+                ) : (
+                  <Text style={styles.userInitial}>{currentUser.username.charAt(0)}</Text>
+                )}
               </View>
-              <Text style={styles.queueUserName}>{currentUser.name}</Text>
-              <Text style={styles.queueStatus}>사용중</Text>
+              <Text style={styles.queueUserName}>{currentUser.username}</Text>
+              <Text style={[
+                styles.queueStatus,
+                currentUser.status === 'IN_PROGRESS' && styles.statusInProgress,
+                currentUser.status === 'WAITING' && styles.statusWaiting,
+                currentUser.status === 'ONE_SKIPPED' && styles.statusSkipped
+              ]}>
+                {currentUser.status === 'IN_PROGRESS' ? '사용중' :
+                 currentUser.status === 'WAITING' ? '대기중' :
+                 currentUser.status === 'ONE_SKIPPED' ? '한번 스킵' : '대기중'}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.queueItem}>
+              <View style={[styles.userCircle, styles.emptyCircle]}>
+                <Text style={styles.emptyCircleText}>+</Text>
+              </View>
+              <Text style={styles.queueUserName}>사용자 없음</Text>
+              <Text style={styles.queueStatus}>대기 가능</Text>
             </View>
           )}
           {waitingUsers.map((user, index) => (
             <View key={user.id} style={styles.queueItem}>
               <View style={[styles.userCircle, styles.waitingCircle]}>
-                <Text style={styles.userInitial}>{user.name.charAt(0)}</Text>
+                {user.userImage ? (
+                  <Image
+                    source={{ uri: API_BASE_URL + user.userImage }}
+                    style={styles.userImage}
+                  />
+                ) : (
+                  <Text style={styles.userInitial}>{user.username.charAt(0)}</Text>
+                )}
               </View>
-              <Text style={styles.queueUserName}>{user.name}</Text>
-              <Text style={styles.queueStatus}>대기 {index + 1}번</Text>
+              <Text style={styles.queueUserName}>{user.username}</Text>
+              <Text style={[
+                styles.queueStatus,
+                user.status === 'WAITING' && styles.statusWaiting,
+                user.status === 'ONE_SKIPPED' && styles.statusSkipped
+              ]}>
+                {user.status === 'WAITING' ? `대기 ${index + 1}번` :
+                 user.status === 'ONE_SKIPPED' ? `한번 스킵 (${index + 1}번)` : `대기 ${index + 1}번`}
+              </Text>
             </View>
           ))}
         </ScrollView>
@@ -374,15 +538,25 @@ const EquipmentDetailScreen: React.FC = () => {
         maxLength={4}
       />
       <ScrollView style={styles.memberList}>
-        {searchResults.map(member => (
+        {(phoneSearchQuery ? searchResults : gymMembers).map(member => (
           <TouchableOpacity
             key={member.id}
             style={styles.memberItem}
             onPress={() => handleMemberSelect(member)}
           >
+            {member.userImage && (
+              <Image
+                source={{ uri: API_BASE_URL + member.userImage }}
+                style={styles.memberAvatar}
+              />
+            )}
             <View style={styles.memberInfo}>
-              <Text style={styles.memberName}>{member.name}</Text>
-              <Text style={styles.memberPhone}>010 - **** - {member.phoneLastFour}</Text>
+              <Text style={styles.memberName}>{member.username}</Text>
+              <Text style={styles.memberPhone}>
+                {member.phoneNum
+                  ? `${member.phoneNum.slice(0, 3)} - **** - ${member.phoneNum.slice(-4)}`
+                  : '번호 없음'}
+              </Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -393,86 +567,108 @@ const EquipmentDetailScreen: React.FC = () => {
 
       {/* 시간 설정 모달 */}
       <Modal
-  visible={showTimeModal}
-  animationType="slide"
-  transparent={true}
->
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>시간 설정</Text>
-      <View style={styles.timeSelectRow}>
-        {[10, 15, 20, 25, 30].map(min => (
-          <TouchableOpacity
-            key={min}
-            style={[
-              styles.timeOption,
-              selectedTime === min && styles.timeOptionSelected
-            ]}
-            onPress={() => setSelectedTime(min)}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[
-                styles.timeOptionText,
-                selectedTime === min && styles.timeOptionTextSelected
-              ]}
-            >
-              {min}min
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      
-      <View style={styles.skipOptionContainer}>
-        <Text style={styles.skipOptionTitle}>순번 설정</Text>
-        <TouchableOpacity
-          style={[
-            styles.skipOptionItem,
-            skipOption === 'next' && styles.skipOptionItemSelected
-          ]}
-          onPress={() => setSkipOption('next')}
-        >
-          <Text style={[
-            styles.skipOptionText,
-            skipOption === 'next' && styles.skipOptionTextSelected
-          ]}>
-            지각하면 다음 순서로 넘겨주세요
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.skipOptionItem,
-            skipOption === 'delete' && styles.skipOptionItemSelected
-          ]}
-          onPress={() => setSkipOption('delete')}
-        >
-          <Text style={[
-            styles.skipOptionText,
-            skipOption === 'delete' && styles.skipOptionTextSelected
-          ]}>
-            지각하면 삭제 해주세요
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.modalButtons}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => setShowTimeModal(false)}
-        >
-          <Text style={styles.closeButtonText}>나가기</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={() => handleWaitingSubmit(selectedTime, skipOption)}
-        >
-          <Text style={styles.submitButtonText}>줄 설래요!</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
+        visible={showTimeModal}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {/* 1. 유저 정보 */}
+            {selectedMember && (
+              <View style={styles.userInfoRow}>
+                {selectedMember.userImage ? (
+                  <Image source={{ uri: API_BASE_URL + selectedMember.userImage }} style={styles.userAvatar} />
+                ) : (
+                  <View style={styles.userAvatarPlaceholder} />
+                )}
+                <View style={styles.userInfoText}>
+                  <Text style={styles.userName}>{selectedMember.username}</Text>
+                  <Text style={styles.userPhone}>
+                    {selectedMember.phoneNum
+                      ? `${selectedMember.phoneNum.slice(0, 3)}-****-${selectedMember.phoneNum.slice(-4)}`
+                      : ''}
+                  </Text>
+                </View>
+              </View>
+            )}
+            {/* 2. 시간 설정 */}
+            <Text style={styles.sectionLabel}>시간 설정</Text>
+            <View style={styles.timeSelectRow}>
+              {[1, 15, 20, 25, 30].map(min => (
+                <TouchableOpacity
+                  key={min}
+                  style={[
+                    styles.timeOption,
+                    selectedTime === min && styles.timeOptionSelected
+                  ]}
+                  onPress={() => setSelectedTime(min)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.timeOptionText,
+                      selectedTime === min && styles.timeOptionTextSelected
+                    ]}
+                  >
+                    {min}min
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {/* 3. 순번 설정 */}
+            <Text style={styles.sectionLabel}>순번 설정</Text>
+            <View style={styles.dropdownWrapper}>
+              <TouchableOpacity
+                style={styles.dropdownBox}
+                onPress={() => setDropdownOpen(!dropdownOpen)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.dropdownText}>
+                  {skipOption === 'next'
+                    ? '지각하면 다음 순서로 넘겨주세요'
+                    : '지각하면 삭제 해주세요'}
+                </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
+              {dropdownOpen && (
+                <View style={styles.dropdownListAbsolute}>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => { setSkipOption('next'); setDropdownOpen(false); }}
+                  >
+                    <Text style={styles.dropdownItemText}>지각하면 다음 순서로 넘겨주세요</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => { setSkipOption('delete'); setDropdownOpen(false); }}
+                  >
+                    <Text style={styles.dropdownItemText}>지각하면 삭제 해주세요</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+            {/* 4. 하단 버튼 */}
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={styles.closeButtonWide}
+                onPress={() => { setShowTimeModal(false); setErrorMessage(''); }}
+              >
+                <Text style={styles.closeButtonText}>나가기</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.submitButtonWide}
+                onPress={handleWaitingSubmit}
+                disabled={!selectedTime}
+              >
+                <Text style={styles.submitButtonText}>줄 설래요!</Text>
+              </TouchableOpacity>
+            </View>
+            {errorMessage && (
+              <Text style={styles.errorMessage}>{errorMessage}</Text>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* start 버튼 모달 (2분 대기) */}
       <Modal
@@ -483,16 +679,27 @@ const EquipmentDetailScreen: React.FC = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              {nextUser?.name}님의 차례입니다.
+              {nextUser?.username}님의 차례입니다.
             </Text>
-            <Text style={styles.modalSubtitle}>
-              {startDelayTimer.minutes}:{startDelayTimer.seconds < 10 ? `0${startDelayTimer.seconds}` : startDelayTimer.seconds}
-            </Text>
-            <Text style={styles.modalSubtitle}>
-              start 버튼을 누르면 {nextUser?.selectedTime}분 타이머가 시작됩니다.
-            </Text>
+            {startDelayTimer.minutes > 0 || startDelayTimer.seconds > 0 ? (
+              <>
+                <Text style={styles.modalSubtitle}>
+                  {startDelayTimer.minutes}:{startDelayTimer.seconds < 10 ? `0${startDelayTimer.seconds}` : startDelayTimer.seconds}
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  start 버튼을 누르면 {nextUser?.selectedTime}분 타이머가 시작됩니다.
+                </Text>
+              </>
+            ) : (
+              <Text style={[styles.modalSubtitle, styles.warningText]}>
+                지각입니다. 다음 차례로 넘어갑니다.
+              </Text>
+            )}
             <TouchableOpacity
-              style={styles.startButton}
+              style={[
+                styles.startButton,
+                (startDelayTimer.minutes === 0 && startDelayTimer.seconds === 0) && styles.startButtonWarning
+              ]}
               onPress={handleStartPress}
             >
               <Text style={styles.startButtonText}>start</Text>
@@ -526,12 +733,17 @@ export const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     marginRight: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 4,
+    color: '#101010',
+    textAlign: 'center',
+    fontFamily: 'Righteous',
+    fontSize: 24,
+    fontStyle: 'normal',
+    fontWeight: '400',
+    lineHeight: 29.8,
   },
   mainContainer: {
     flex: 1,
@@ -539,16 +751,17 @@ export const styles = StyleSheet.create({
   },
   leftPanel: {
     flex: 1,
+    flexDirection: 'column',
     padding: 40,
-    justifyContent: 'flex-start',
+    backgroundColor: '#fff',
   },
   rightPanel: {
-    width: isTablet ? 280 : 220, 
+    width: isTablet ? 320 : 220, 
     backgroundColor: '#f8f8f8',
     padding: 16,
   },
   bottomPanel: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#fff',
     borderTopWidth: 5,
     borderTopColor: '#28D8AF',
   },
@@ -560,20 +773,27 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
     textAlign: 'center',
+    fontFamily: 'Pretendard',
   },
   timerContainer: {
+    flex: 1.3,
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     maxWidth: 889,
   },
   timerText: {
-    color: '#28D8AF',
-    textAlign: 'center',
-    marginVertical: 50,
-    fontSize: isTablet ? 200 : 100, 
-    fontFamily: 'Pixelify Sans',
-    fontWeight: '400',
+    fontFamily: 'PixelifySans',
+    fontSize: isTablet ? 140 : 80,
     letterSpacing: 10,
+    textAlign: 'center',
+    flexDirection: 'row',
+  },
+  timerTextBlack: {
+    color: '#101010',
+  },
+  timerTextMint: {
+    color: '#28D8AF',
   },
   waitingQueue: {
     padding: 30,
@@ -610,17 +830,20 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 4,
+    fontFamily: 'Inter',
   },
   queueStatus: {
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
+    fontFamily: 'Inter',
   },
   memberListTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+    fontFamily: 'Inter',
   },
   searchInput: {
     borderWidth: 1,
@@ -630,32 +853,43 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
     marginBottom: 16,
+    fontFamily: 'Inter',
   },
   memberList: {
     flex: 1,
   },
   memberItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
     backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+  },
+  memberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+    backgroundColor: '#eee',
   },
   memberInfo: {
-    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
   memberName: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    color: '#222',
+    fontFamily: 'Inter',
   },
   memberPhone: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
+    fontFamily: 'Inter',
   },
   modalContainer: {
     flex: 1,
@@ -664,55 +898,67 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 8,
+    width: 712,
+    height: 400,
+    maxWidth: 712,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
     padding: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 5,
     textAlign: 'center',
+    fontFamily: 'Inter',
   },
   modalSubtitle: {
     fontSize: 16,
-    marginBottom: 16,
+    marginBottom: 10,
     textAlign: 'center',
+    fontFamily: 'Inter',
   },
   timeSelectRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginVertical: 16,
     gap: 8,
+    marginBottom: 16,
+    width: '100%',
   },
   timeOption: {
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   timeOptionSelected: {
     backgroundColor: '#28D8AF',
   },
   timeOptionText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#222',
-    fontWeight: 'bold',
+    fontWeight: 'normal',
+    fontFamily: 'Inter',
   },
   timeOptionTextSelected: {
     color: '#fff',
+    fontFamily: 'Inter',
   },
   skipOptionContainer: {
     marginBottom: 16,
     alignItems: 'center',
   },
   skipOptionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 10,
     textAlign: 'center',
+    fontFamily: 'Inter',
   },
   skipOptionButtons: {
     flexDirection: 'row',
@@ -733,6 +979,7 @@ export const styles = StyleSheet.create({
   skipOptionButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'Inter',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -749,10 +996,11 @@ export const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
+    fontFamily: 'Inter',
   },
   closeButton: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#F8F8F8',
     borderRadius: 4,
     padding: 12,
     minWidth: 100,
@@ -760,7 +1008,8 @@ export const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
+    fontFamily: 'Inter',
   },
   startButton: {
     backgroundColor: '#28D8AF',
@@ -774,6 +1023,7 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Inter',
   },
   skipOptionItem: {
     backgroundColor: '#f8f9fa',
@@ -792,10 +1042,130 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+    fontFamily: 'Inter',
   },
   skipOptionTextSelected: {
     color: '#28D8AF',
     fontWeight: '500',
+    fontFamily: 'Inter',
+  },
+  userImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
+  },
+  emptyCircle: {
+    backgroundColor: '#e0e0e0',
+    borderWidth: 2,
+    borderColor: '#28D8AF',
+    borderStyle: 'dashed',
+  },
+  emptyCircleText: {
+    color: '#28D8AF',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  statusInProgress: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+  },
+  statusWaiting: {
+    color: '#2196F3',
+  },
+  statusSkipped: {
+    color: '#FF9800',
+  },
+  warningText: {
+    color: '#FF5722',
+    fontWeight: 'bold',
+  },
+  startButtonWarning: {
+    backgroundColor: '#FF5722',
+  },
+  errorMessage: {
+    color: '#FF5722',
+    textAlign: 'center',
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 5,
+    fontFamily: 'Inter',
+  },
+  submitButtonTextDisabled: {
+    opacity: 0.5,
+  },
+  userInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    width: '100%',
+  },
+  userAvatar: {
+    width: 48, height: 48, borderRadius: 24, marginRight: 16,
+  },
+  userAvatarPlaceholder: {
+    width: 48, height: 48, borderRadius: 24, marginRight: 16, backgroundColor: '#eee',
+  },
+  userInfoText: { flexDirection: 'column' },
+  userName: { fontSize: 16, fontWeight: 'bold', color: '#222', fontFamily: 'Inter' },
+  userPhone: { fontSize: 14, color: '#888', fontFamily: 'Inter' },
+  sectionLabel: {
+    fontSize: 16, fontWeight: 'bold', color: '#222', marginBottom: 8, marginTop: 8, textAlign: 'left', width: '100%', fontFamily: 'Inter'
+  },
+  dropdownWrapper: {
+    width: '100%',
+    minHeight: 56,
+    marginBottom: 8,
+    position: 'relative',
+  },
+  dropdownListAbsolute: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    zIndex: 10,
+  },
+  dropdownBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    width: '100%',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f8f8',
+  },
+  dropdownText: { fontSize: 16, color: '#222' },
+  dropdownArrow: { fontSize: 16, color: '#888' },
+  dropdownItem: { padding: 12 },
+  dropdownItemText: { fontSize: 16, color: '#222' },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 16,
+    marginTop: 24,
+  },
+  closeButtonWide: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  submitButtonWide: {
+    flex: 1,
+    backgroundColor: '#28D8AF',
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
   },
 });
 export default EquipmentDetailScreen;

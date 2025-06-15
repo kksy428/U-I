@@ -89,23 +89,94 @@ export class UsageService {
     const stats = new Map<string, { totalMinutes: number; equipType: string }>();
 
     usages.forEach((usage) => {
-      const duration = Math.floor(
-        (usage.end_time!.getTime() - usage.start_time.getTime()) / (1000 * 60)
-      );
-      
-      const equipName = usage.equipment.equip_name;
-      if (!stats.has(equipName)) {
-        stats.set(equipName, { totalMinutes: 0, equipType: usage.equipment.equip_type });
+      if (usage.start_time && usage.end_time) {
+        const duration = Math.floor(
+          (usage.end_time.getTime() - usage.start_time.getTime()) / (1000 * 60)
+        );
+        const equipName = usage.equipment.equip_name;
+        if (!stats.has(equipName)) {
+          stats.set(equipName, { totalMinutes: 0, equipType: usage.equipment.equip_type });
+        }
+        const current = stats.get(equipName)!;
+        current.totalMinutes += duration;
       }
-      
-      const current = stats.get(equipName)!;
-      current.totalMinutes += duration;
     });
 
     return Array.from(stats.entries()).map(([equipName, data]) => ({
       equipName,
       equipType: data.equipType,
       totalMinutes: data.totalMinutes,
+    }));
+  }
+
+  async getCurrentUsage(equipmentId: number) {
+    const currentUsage = await this.prisma.usage.findFirst({
+      where: {
+        equipment_id: equipmentId,
+        is_active: true,
+        end_time: {
+          not: null
+        }
+      },
+      include: {
+        user: true,
+        equipment: true
+      }
+    });
+
+    if (!currentUsage) {
+      return null;
+    }
+
+    return {
+      id: currentUsage.id,
+      startTime: currentUsage.start_time,
+      endTime: currentUsage.end_time,
+      user: {
+        username: currentUsage.user.username,
+        phone_num: currentUsage.user.phone_num,
+        user_image: currentUsage.user.user_image
+      },
+      equipment: {
+        name: currentUsage.equipment.equip_name,
+        type: currentUsage.equipment.equip_type
+      }
+    };
+  }
+
+  async getUsageStats(userId: number) {
+    const usages = await this.prisma.usage.findMany({
+      where: {
+        user_id: userId,
+        is_active: true,
+        end_time: { not: null }
+      },
+      include: {
+        user: true,
+        equipment: true
+      }
+    });
+
+    const stats = new Map();
+    for (const usage of usages) {
+      if (usage.start_time && usage.end_time) {
+        const equipName = usage.equipment.equip_name;
+        if (!stats.has(equipName)) {
+          stats.set(equipName, { 
+            totalMinutes: 0, 
+            equipType: usage.equipment.equip_type 
+          });
+        }
+        const duration = Math.floor(
+          (usage.end_time.getTime() - usage.start_time.getTime()) / (1000 * 60)
+        );
+        stats.get(equipName).totalMinutes += duration;
+      }
+    }
+
+    return Array.from(stats.entries()).map(([name, data]) => ({
+      name,
+      ...data
     }));
   }
 }

@@ -5,48 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="918ca76c-e34b-409c-bbc1-0b3e63355879" name="변경" comment="">
-      <change beforePath="$PROJECT_DIR$/QoqoApp/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/.vscode/settings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/(tabs)/_layout.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/(tabs)/index.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/+not-found.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/EquipmentDetailScreen.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/Type.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/_layout.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/ch.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/de.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/leg.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/asset/sit.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/login-loading.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/login.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/main.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/signup-complete.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/app/signup.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/fonts/PixelifySans-VariableFont_wght.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/fonts/PretendardVariable.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/fonts/Righteous-Regular.ttf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/assets/images/logo.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/Collapsible.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ExternalLink.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/HapticTab.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/HelloWave.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ParallaxScrollView.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ThemedText.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ThemedView.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/IconSymbol.ios.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/IconSymbol.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/TabBarBackground.ios.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/components/ui/TabBarBackground.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/constants/Colors.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/eslint.config.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/hooks/useColorScheme.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/hooks/useColorScheme.web.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/hooks/useThemeColor.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/package-lock.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/package.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/scripts/reset-project.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/QoqoApp/tsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/dd8b9482-cf1d-4a2f-8669-775fb73f0b68.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/dd8b9482-cf1d-4a2f-8669-775fb73f0b68.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/EquipmentDetailScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/EquipmentDetailScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/Type.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/Type.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/login-loading.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/login-loading.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/login.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/signup-complete.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/signup-complete.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/app/signup.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/app/signup.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qoqo-client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/qoqo-client/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,6 +40,7 @@
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;database.data.extractors.current.export.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/cksgu&quot;,

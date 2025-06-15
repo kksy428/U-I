@@ -1,17 +1,20 @@
-import { Controller, Post, Get, Body, Param, ParseIntPipe, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
+import { ReservationStatus } from '@prisma/client';
 
-@Controller('reservation')
+@Controller('reservations')
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
-  // 운동기구 예약하기
+  /**
+   * 새로운 예약 생성
+   */
   @Post()
   async createReservation(
-    @Body('userId') userId: number,
-    @Body('equipmentId') equipmentId: number,
-    @Body('desiredTime') desiredTime: number,
-    @Body('latePolicy') latePolicy: 'SKIP' | 'MOVE_TO_NEXT',
+    @Body('userId', ParseIntPipe) userId: number,
+    @Body('equipmentId', ParseIntPipe) equipmentId: number,
+    @Body('desiredTime', ParseIntPipe) desiredTime: number,
+    @Body('latePolicy') latePolicy: 'CANCELLED' | 'MOVE_TO_NEXT',
   ) {
     return await this.reservationService.createReservation(
       userId,
@@ -21,10 +24,15 @@ export class ReservationController {
     );
   }
 
-  // 예약 상태 업데이트
-  @Put(':id/status')
-  async updateReservationStatus(@Param('id', ParseIntPipe) id: number) {
-    return await this.reservationService.updateReservationStatus(id);
+  /**
+   * 운동 상태 변경 이벤트 처리
+   */
+  @Put('equipment/:equipmentId/status-event')
+  async handleExerciseStatusEvent(
+    @Param('equipmentId', ParseIntPipe) equipmentId: number,
+    @Body('eventType') eventType: 'START_EXERCISE' | 'END_EXERCISE' | 'ARRIVE' | 'LATE',
+  ) {
+    return await this.reservationService.handleExerciseStatusEvent(equipmentId, eventType);
   }
 
   // 사용자의 현재 예약 목록 조회
@@ -33,14 +41,26 @@ export class ReservationController {
     return await this.reservationService.getUserActiveReservations(userId);
   }
 
-  // 예약 시작 (운동 시작)
-  @Post(':id/start')
-  async startReservation(@Param('id', ParseIntPipe) id: number) {
-    return await this.reservationService.startReservation(id);
+  /**
+   * 현재 운동 상태 조회
+   */
+  @Get('equipment/:equipmentId/status')
+  async getCurrentExerciseStatus(@Param('equipmentId', ParseIntPipe) equipmentId: number) {
+    return await this.reservationService.getCurrentExerciseStatus(equipmentId);
   }
 
-  // 모든 예약 데이터 삭제 (테스트용)
-  @Delete('delete-all')
+  /**
+   * 운동기구의 대기열 조회
+   */
+  @Get('equipment/:equipmentId/queue')
+  async getEquipmentQueue(@Param('equipmentId', ParseIntPipe) equipmentId: number) {
+    return await this.reservationService.getEquipmentQueue(equipmentId);
+  }
+
+  /**
+   * 모든 예약 삭제 (개발용)
+   */
+  @Delete('all')
   async deleteAllReservations() {
     return await this.reservationService.deleteAllReservations();
   }
